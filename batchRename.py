@@ -8,7 +8,12 @@ Returns a dict mapping input file name to output file name such that
     dict[input_name] = output_name
 '''
 def get_mappings(mappingsFile):
-    pass
+    mapping = {}
+    with open(mappingsFile) as data:
+        for line in data:
+            key, value = line.split(',')
+            mapping[key] = value.strip()
+    return mapping
 
 '''
 References

@@ -94,12 +94,14 @@ def main():
     if len(sys.argv) > 5:
         r, g, b = sys.argv[5].split('-')
         fill_color = (int(r), int(g), int(b))
-        if fill_color[0] > 255 or fill_color[1] > 255 or fill_color[2] > 255:
-            print('Invalid input: r, g, b, all must be <= 255')
+        if fill_color[0] > 255 or fill_color[1] > 255 or fill_color[2] > 255 or fill_color[0] < 0 or fill_color[1] < 0 or fill_color[2] < 0:
+            print('Invalid input: r, g, b, all must be on the interval [0, 255]')
             exit()
     try:
         width = int(sys.argv[3])
         height = int(sys.argv[4])
+        if width < 1 or height < 1:
+            raise ValueError('Width or height was not positive')
     except:
         print('Invalid width or height value')
         print('Please only enter positive integers for width and height')
@@ -119,10 +121,9 @@ def main():
             cv2.imwrite(os.path.join(outDir, image_name), img_frame)
             success += 1
         except Exception as e:
-            raise
-            #print('Failed to resize or write image: ' + image_name)
-            #print(e)
-            #rint()
+            print('Failed to resize or write image: ' + image_name)
+            print(e)
+            print()
 
     print('Succeeded on ' + str(success) + ' / ' + str(len(image_names)) + ' (' + str((success / len(image_names)) * 100) + '%) of images')
 

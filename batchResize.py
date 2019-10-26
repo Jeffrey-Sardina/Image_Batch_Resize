@@ -13,8 +13,9 @@ References:
     http://tsaith.github.io/combine-images-into-a-video-with-python-3-and-opencv-3.html
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.concatenate.html
     https://stackoverflow.com/questions/12881926/create-a-new-rgb-opencv-image-using-python#12890573
+    https://www.pythoninformer.com/python-libraries/numpy/numpy-and-images/
 '''
-def resize_img(img_frame, width, height):
+def resize_img(img_frame, width, height, fill_color = (0, 0, 0)):
     #Get ratios
     img_height, img_width, channels = img_frame.shape
     scalar_difference_height = height / img_height
@@ -45,6 +46,9 @@ def resize_img(img_frame, width, height):
         top = np.zeros((top_diff, width, channels), np.uint8)
         bottom = np.zeros((bottom_diff, width, channels), np.uint8)
 
+        top[:,:] = fill_color
+        bottom[:,:] = fill_color
+
         resized = np.concatenate((top, resized), axis = 0)
         resized = np.concatenate((resized, bottom), axis = 0)
     else: #we need to add pixels to the sides
@@ -55,6 +59,9 @@ def resize_img(img_frame, width, height):
         left = np.zeros((height, left_diff, channels), np.uint8)
         right = np.zeros((height, right_diff, channels), np.uint8)
 
+        left[:,:] = fill_color
+        right[:,:] = fill_color
+
         resized = np.concatenate((left, resized), axis = 1)
         resized = np.concatenate((resized, right), axis = 1)
 
@@ -63,12 +70,19 @@ def resize_img(img_frame, width, height):
 '''
 Batch converts the images at a given file location to given dimensions and writes them out into given folder
 
+Arguments
+    1 input folder (containing images only)
+    2 output folder (for resized images)
+    3 width for resize
+    4 height for resize
+    5 (optional) fill color (default black). Give in the form rrr-ggg-bbb (no higher than 255-255-255)
+
 References:
     https://docs.opencv.org/2.4/doc/tutorials/introduction/load_save_image/load_save_image.html
 '''
 def main():
     #Handle incorrect input
-    if(len(sys.argv) < 4):
+    if(len(sys.argv) < 5):
         print('Please provide the input folder, outpug folder, desired width, and desired height')
         print('For example: python batchResize.py in/folder/ out/folder/ 640 480')
         exit()
@@ -76,6 +90,13 @@ def main():
     #Collect input and handle invalid input
     inDir = sys.argv[1]
     outDir = sys.argv[2]
+    fill_color = (0, 0, 0)
+    if len(sys.argv) > 5:
+        r, g, b = sys.argv[5].split('-')
+        fill_color = (int(r), int(g), int(b))
+        if fill_color[0] > 255 or fill_color[1] > 255 or fill_color[2] > 255:
+            print('Invalid input: r, g, b, all must be <= 255')
+            exit()
     try:
         width = int(sys.argv[3])
         height = int(sys.argv[4])
@@ -91,8 +112,18 @@ def main():
     os.chdir('..')
 
     #Resize images
+    success = 0
     for image_name in image_names:
-        img_frame = resize_img(cv2.imread(os.path.join(inDir, image_name)), width, height)
-        cv2.imwrite(os.path.join(outDir, image_name), img_frame)
+        try:
+            img_frame = resize_img(cv2.imread(os.path.join(inDir, image_name)), width, height, fill_color)
+            cv2.imwrite(os.path.join(outDir, image_name), img_frame)
+            success += 1
+        except Exception as e:
+            raise
+            #print('Failed to resize or write image: ' + image_name)
+            #print(e)
+            #rint()
+
+    print('Succeeded on ' + str(success) + ' / ' + str(len(image_names)) + ' (' + str((success / len(image_names)) * 100) + '%) of images')
 
 main()
